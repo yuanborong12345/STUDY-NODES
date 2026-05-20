@@ -294,41 +294,342 @@ public static void method1(String... args) {
 
 会优先匹配固定参数的方法，因为固定参数的方法匹配度更高。
 
-## 三、面向对象
+## 三、面向对象基础
 
-### 3.1 封装、继承和多态
+### 3.1 面向对象
 
-- **封装：**封装是指将对象的属性和行为结合一起，对外隐藏对象的内部细节，仅通过对象的接口与外界交互。增强安全性和简化编程
+#### 3.1.1 面向过程比面向对象的性能高？
+
+类的调用需要实例化，开销比较大
+
+面向过程也需要分配内存，Java性能差是因为Java是半编译语言，最终执行代码并不是可以直接被CPU执行的二进制机械码
+
+#### 3.1.2 创建一个对象用什么运算符
+
+new 运算符，new 创建对象实例（对象实例在**堆内存**中），对象引用指向对象实例（对象引用存放在**栈内存**）
+
+#### 3.1.3 对象相等和引用相等的区别
+
+- 对象相等：内存中存放的内容是否相等
+- 引用相等：内存地址是否相等
+
+```java
+String str1 = "hello";
+String str2 = new String("hello");
+String str3 = "hello";
+// 使用 == 比较字符串的引用是否相等
+System.out.println(str1 == str2); //false
+System.out.println(str1 == str3); //true
+// 使用 equals 方法比较字符串的相等
+System.out.println(str1.equals(str2)); //true
+System.out.println(str1.equals(str3)); // true
+```
+
+#### 3.1.4 面向对象和面向过程的区别
+
+- 面向对象编程(POP)：面向对象会先抽象出对象，然后用对象的执行方法的方式解决问题
+- 面向过程编程(OOP)：面向过程把解决问题的过程拆解为一个个方法，通过一个个方法的执行解决问题
+
+#### 3.1.5 如果一个类没有声明构造方法，程序能正确执行吗
+
+可以，一个类没用声明构造方法会调用默认的不带参数构造方法
+
+#### 3.1.6 构造方法可以被 override吗
+
+不能被重写，但是能够被重载。一个类可以提供多个构造方法，不同的参数列表去初始化
+
+### 3.2 面向对象三大特征
+
+![image-20260519180420936](images/image-20260519180420936.png)
+
+#### 3.2.1 封装
+
+封装是指将对象的属性和行为结合一起，对外隐藏对象的内部细节，仅通过对象的接口与外界交互。增强安全性和简化编程
+
+```java
+public class Student {
+    private int id;//id属性私有化
+    //获取id的方法
+    public int getId() {
+        return id;
+    }
+    //设置id的方法
+    public void setId(int id) {
+        this.id = id;
+    }
+}
+```
+
+#### 3.2.2 继承
+
+继承是一种可以使得子类共享父类数据结构和方法的机制。是代码复用的主要手段
+
+- 子类拥有父类对象的所有属性和方法（包括私有属性和私有方法），但是父类中的私有属性和方法子类是无法访问的。
+- 子类可以拥有自己的属性和方法，即子类对父类进行扩展
+- 子类可以用自己的方式实现父类的方法
+
+#### 3.2.3 多态
+
+多态是指允许不同类的对象对同一消息做出响应。即同一个接口，使用不同的实例而执行不同操作。多态性可以分为编译时多态（重载）和运行时多态（重写）
+
+**多态的特点:**
+
+- 对象类型和引用类型之间具有继承（类）/实现（接口）的关系；
+- 引用类型变量发出的方法调用的到底是哪个类中的方法，必须在程序运行期间才能确定；
+- 多态不能调用“只在子类存在但在父类不存在”的方法；
+- 如果子类重写了父类的方法，真正执行的是子类重写的方法，如果子类没有重写父类的方法，执行的是父类的方法。
+
+### 3.3 接口和抽象类
+
+#### 3.3.1 共同点
+
+- **实例化**：接口和抽象类都不能直接实例化，只能被实现（接口）或继承（抽象类）后才能创建具体的对象。
+- **抽象方法**：接口和抽象类都可以包含抽象方法。抽象方法没有方法体，必须在子类或实现类中实现。
+
+#### 3.3.2 区别
+
+- **设计目的**：接口主要用于对类的行为进行约束，你实现了某个接口就具有了对应的行为。抽象类主要用于代码复用，强调的是所属关系。
+
+- **继承和实现**：一个类只能继承一个类（包括抽象类），因为 Java 不支持多继承。但一个类可以实现多个接口，一个接口也可以继承多个其他接口。
+
+- **成员变量**：接口中的成员变量只能是 `public static final` 类型的，不能被修改且必须有初始值。抽象类的成员变量可以有任何修饰符（`private`, `protected`, `public`），可以在子类中被重新定义或赋值。
+
+- 方法
+
+  - Java 8 之前，接口中的方法默认是 `public abstract` ，也就是只能有方法声明。自 Java 8 起，可以在接口中定义 `default`（默认） 方法和 `static` （静态）方法。 自 Java 9 起，接口可以包含 `private` 方法。
+  - 抽象类可以包含抽象方法和非抽象方法。抽象方法没有方法体，必须在子类中实现。非抽象方法有具体实现，可以直接在抽象类中使用或在子类中重写。
+
+  在 Java 8 及以上版本中，接口引入了新的方法类型：`default` 方法、`static` 方法；Java 9 允许在接口中使用 `private` 方法，用于在接口内部共享代码，不对外暴露。
 
   ```java
-  public class Student {
-      private int id;//id属性私有化
-      //获取id的方法
-      public int getId() {
-          return id;
+  public interface MyInterface {
+      // default 方法，用于提供接口方法的默认实现，可以在实现类中被覆盖。
+      default void defaultMethod() {
+          commonMethod();
       }
-      //设置id的方法
-      public void setId(int id) {
-          this.id = id;
+  
+      // static 方法，无法在实现类中被覆盖，只能通过接口名直接调用
+      static void staticMethod() {
+          commonMethod();
+      }
+  
+      // 私有静态方法，可以被 static 和 default 方法调用
+      private static void commonMethod() {
+          System.out.println("This is a private method used internally.");
+      }
+  
+        // 实例私有方法，只能被 default 方法调用。
+      private void instanceCommonMethod() {
+          System.out.println("This is a private instance method used internally.");
       }
   }
   ```
 
-  
+### 3.4 深拷贝和浅拷贝
 
-- **继承：**继承是一种可以使得子类共享父类数据结构和方法的机制。是代码复用的主要手段
+<img src="images/image-20260520115409244.png" alt="image-20260520115409244" style="zoom:67%;" />
 
-- **多态：**多态是指允许不同类的对象对同一消息做出响应。即同一个接口，使用不同的实例而执行不同操作。多态性可以分为编译时多态（重载）和运行时多态（重写）
+![image-20260520115422129](images/image-20260520115422129.png)
 
-![image-20260519180420936](images/image-20260519180420936.png)
+#### 3.4.1 浅拷贝
 
-### 3.2 多态详解
+浅拷贝会在堆上创建一个新的对象，不过如果原对象内部的属性是引用类型的话，浅拷贝会直接复制内部对象的引用地址，也就是拷贝对象和原对象共享一个内部对象
 
-方法重载：同一个类中可以有多个同名方法，但是有不同的参数列表（参数类型，数量或顺序不同）
+```java
+public class Address implements Cloneable{
+    private String name;
+    // 省略构造函数、Getter&Setter方法
+    @Override
+    public Address clone() {
+        try {
+            return (Address) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+}
 
-方法重写：子类能够重写父类中同名方法的具体实现
+public class Person implements Cloneable {
+    private Address address;
+    // 省略构造函数、Getter&Setter方法
+    @Override
+    public Person clone() {
+        try {
+            Person person = (Person) super.clone();
+            return person;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+}
 
-接口与实现：多个类可以实现同一个接口，并且使用接口类型的引用来调用这些类的方法
+Person person1 = new Person(new Address("武汉"));
+Person person1Copy = person1.clone();
+System.out.println(person1.getAddress() == person1Copy.getAddress());// true
+```
 
+#### 3.4.2 深拷贝
 
+```java
+@Override
+public Person clone() {
+    try {
+        Person person = (Person) super.clone();
+        person.setAddress(person.getAddress().clone());
+        return person;
+    } catch (CloneNotSupportedException e) {
+        throw new AssertionError();
+    }
+}
 
+Person person1 = new Person(new Address("武汉"));
+Person person1Copy = person1.clone();
+System.out.println(person1.getAddress() == person1Copy.getAddress());// false
+```
+
+### 3.5 Object类
+
+#### 3.5.1 常见方法
+
+```java
+/**
+ * native 方法，用于返回当前运行时对象的 Class 对象，使用了 final 关键字修饰，故不允许子类重写。
+ */
+public final native Class<?> getClass()
+/**
+ * native 方法，用于返回对象的哈希码，主要使用在哈希表中，比如 JDK 中的HashMap。
+ */
+public native int hashCode()
+/**
+ * 用于比较 2 个对象的内存地址是否相等，String 类对该方法进行了重写以用于比较字符串的值是否相等。
+ */
+public boolean equals(Object obj)
+/**
+ * native 方法，用于创建并返回当前对象的一份拷贝。
+ */
+protected native Object clone() throws CloneNotSupportedException
+/**
+ * 返回类的名字实例的哈希码的 16 进制的字符串。建议 Object 所有的子类都重写这个方法。
+ */
+public String toString()
+/**
+ * native 方法，并且不能重写。唤醒一个在此对象监视器上等待的线程(监视器相当于就是锁的概念)。如果有多个线程在等待只会任意唤醒一个。
+ */
+public final native void notify()
+/**
+ * native 方法，并且不能重写。跟 notify 一样，唯一的区别就是会唤醒在此对象监视器上等待的所有线程，而不是一个线程。
+ */
+public final native void notifyAll()
+/**
+ * native方法，并且不能重写。暂停线程的执行。注意：sleep 方法没有释放锁，而 wait 方法释放了锁 ，timeout 是等待时间。
+ */
+public final native void wait(long timeout) throws InterruptedException
+/**
+ * 多了 nanos 参数，这个参数表示额外时间（以纳秒为单位，范围是 0-999999）。 所以超时的时间还需要加上 nanos 纳秒。。
+ */
+public final void wait(long timeout, int nanos) throws InterruptedException
+/**
+ * 跟之前的2个wait方法一样，只不过该方法一直等待，没有超时时间这个概念
+ */
+public final void wait() throws InterruptedException
+/**
+ * 实例被垃圾回收器回收的时候触发的操作
+ */
+protected void finalize() throws Throwable { }
+```
+
+#### 3.5.2 == 和 equals 的区别
+
+**`==`** 对于基本类型和引用类型的作用效果是不同的：
+
+- 对于基本数据类型来说，`==` 比较的是值。
+- 对于引用数据类型来说，`==` 比较的是对象的内存地址。
+
+**`equals()`** 不能用于判断基本数据类型的变量，只能用来判断两个对象是否相等。
+
+- **类没有重写 `equals()`方法**：通过`equals()`比较该类的两个对象时，等价于通过“==”比较这两个对象，使用的默认是 `Object`类`equals()`方法。
+- **类重写了 `equals()`方法**：一般我们都重写 `equals()`方法来比较两个对象中的属性是否相等；若它们的属性相等，则返回 true(即，认为这两个对象相等)。
+
+**`String`** 中的 `equals` 方法是被重写过的，因为 `Object` 的 `equals` 方法是比较的对象的内存地址，而 `String` 的 `equals` 方法比较的是对象的值。
+
+```java
+//虚拟机会在常量池中查找有没有已经存在的值和要创建的值相同的对象，如果有就把它赋给当前引用；如果没有，就在常量池中创建一个 String 对象并赋给当前引用
+String aa = "ab"; 
+//虚拟机总是会在堆内存中创建一个新的对象并使用常量池中的值（如果没有，会先在字符串常量池中创建字符串对象 "ab"）进行初始化，然后赋给当前引用。
+String a = new String("ab");
+```
+
+#### 3.5.3 为什么重写 equals() 时必须重写 hashCode() 方法
+
+因为两个相等的对象的 `hashCode` 值必须是相等。也就是说如果 `equals` 方法判断两个对象是相等的，那这两个对象的 `hashCode` 值也要相等。
+
+如果重写 `equals()` 时没有重写 `hashCode()` 方法的话就可能会导致 `equals` 方法判断是相等的两个对象，`hashCode` 值却不相等。
+
+**总结**：
+
+- `equals` 方法判断两个对象是相等的，那这两个对象的 `hashCode` 值也要相等。
+- 两个对象有相同的 `hashCode` 值，他们也不一定是相等的（哈希碰撞）。
+
+### 3.6 String类
+
+#### 3.6.1 String 、StringBuffer、StringBuilder的区别
+
+**可变性：**
+
+`String` 是不可变的（后面会详细分析原因），每次修改都会生成新的对象，并将引用指向新的实例，而 `StringBuffer` 和 `StringBuilder` 都是可变的，它们在修改字符串时不会创建新对象，而是直接在原有字符数组上进行操作
+
+**线程安全性：**
+
+- `String` 中的对象是不可变的，也就可以理解为常量，线程安全。
+- `StringBuffer` 对方法加了同步锁，所以是线程安全的。
+- `StringBuilder` 并没有对方法进行加同步锁，所以是非线程安全的。
+
+**性能：**
+
+- `StringBuffer` 的方法通常是同步的（线程安全），因此会带来一定的性能开销；
+- `StringBuilder` 没有同步开销（非线程安全），在单线程场景下通常具有更好的性能表现。
+
+#### 3.6.2 字符串的拼接
+
+“+”和“+=”是专门为 String 类重载过的运算符，也是 Java 中仅有的两个重载过的运算符。
+
++号实际上是通过 `StringBuilder` 调用 `append()` 方法实现的，拼接完成之后调用 `toString()` 得到一个 `String` 对象
+
+```java
+//编译器不会创建单个 StringBuilder 以复用，会导致创建过多的 StringBuilder 对象。
+String[] arr = {"he", "llo", "world"};
+String s = "";
+for (int i = 0; i < arr.length; i++) {
+    s += arr[i];
+}
+System.out.println(s);
+//改进：使用 StringBuilder 对象进行字符串拼接
+String[] arr = {"he", "llo", "world"};
+StringBuilder s = new StringBuilder();
+for (String value : arr) {
+    s.append(value);
+}
+System.out.println(s);
+```
+
+#### 3.6.3 字符串常量池的作用了解吗？
+
+**字符串常量池** 是 JVM 为了提升性能和减少内存消耗针对字符串（String 类）专门开辟的一块区域，主要目的是为了避免字符串的重复创建。
+
+```java
+// 1.在字符串常量池中查询字符串对象 "ab"，如果没有则创建"ab"并放入字符串常量池
+// 2.将字符串对象 "ab" 的引用赋值给 aa
+String aa = "ab";
+// 直接返回字符串常量池中字符串对象 "ab"，赋值给引用 bb
+String bb = "ab";
+System.out.println(aa==bb); // true
+
+String s1 = new String("abc")
+1. 字符串常量池中不存在 "abc"：会创建 2 个 字符串对象。一个在字符串常量池中，由 `ldc` 指令触发创建。一个在堆中，由 `new String()` 创建，并使用常量池中的 "abc" 进行初始化。
+2. 字符串常量池中已存在 "abc"：会创建 1 个 字符串对象。该对象在堆中，由 `new String()` 创建，并使用常量池中的 "abc" 进行初始化。
+```
+
+#### 3.6.4 String 的intern方法
+
+- `intern()` 方法的主要作用是确保字符串引用在常量池中的唯一性。
+- 当调用 `intern()` 时，如果常量池中已经存在相同内容的字符串，则返回常量池中已有对象的引用；否则，将该字符串添加到常量池并返回其引用。
