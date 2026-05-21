@@ -534,6 +534,7 @@ public final void wait(long timeout, int nanos) throws InterruptedException
 public final void wait() throws InterruptedException
 /**
  * 实例被垃圾回收器回收的时候触发的操作
+ * 执行时机是不确定的，Java 9之后已经被标记过过时
  */
 protected void finalize() throws Throwable { }
 ```
@@ -633,3 +634,547 @@ String s1 = new String("abc")
 
 - `intern()` 方法的主要作用是确保字符串引用在常量池中的唯一性。
 - 当调用 `intern()` 时，如果常量池中已经存在相同内容的字符串，则返回常量池中已有对象的引用；否则，将该字符串添加到常量池并返回其引用。
+
+## 四、异常
+
+![image-20260521101823498](images/image-20260521101823498.png)
+
+### 4.1 Exception 和 Error 的区别
+
+- Exception ： 程序本身可以处理的异常，可以通过catch捕获，又分为受检异常和不受检异常
+  + Checked Exception : 受检异常，编译过程中受检异常如果没有被catch 或 throws的话，就没办法通过编译， IO相关异常，ClassNotFoundException、SQLException
+  + UnChecked Exception ：不受检异常，编译过程中，不处理不受检查异常也可以通过编译，RuntimeException及其子类都是非受检异常，常见的如下：
+    - `NullPointerException`(空指针错误)
+    - `IllegalArgumentException`(参数错误比如方法入参类型错误)
+    - `NumberFormatException`（字符串转换为数字格式错误，`IllegalArgumentException`的子类）
+    - `ArrayIndexOutOfBoundsException`（数组越界错误）
+    - `ClassCastException`（类型转换错误）
+    - `ArithmeticException`（算术错误）
+    - `SecurityException` （安全错误比如权限不够）
+    - `UnsupportedOperationException`(不支持的操作错误比如重复创建同一用户)
+- Error： 程序无法处理的错误
+
+### 4.2 ClassNotFoundException 和 NoClassDefFoundError 的区别
+
+- `ClassNotFoundException` 是Exception，发生在使用反射等动态加载时找不到类，是可预期的，可以捕获处理。
+- `NoClassDefFoundError` 是Error，是编译时存在的类，在运行时链接不到了（比如 jar 包缺失），是环境问题，导致 JVM 无法继续
+
+### 4.3 Throwable类常见方法
+
+String getMessage(): 返回异常发生时的详细信息
+
+String toString(): 返回异常发生的简要信息
+
+void printStackTrace(): 在控制台打印 Throwable对象封装的异常信息
+
+### 4.4 try-catch-finally 的使用
+
+- `try`块：用于捕获异常。其后可接零个或多个 `catch` 块，如果没有 `catch` 块，则必须跟一个 `finally` 块。
+- `catch`块：用于处理 try 捕获到的异常。
+- `finally` 块：无论是否捕获或处理异常，`finally` 块里的语句都会被执行。当在 `try` 块或 `catch` 块中遇到 `return` 语句时，`finally` 语句块将在方法返回之前被执行。
+
+#### 4.4.1 finally 和 try 块的return语句哪个先执行？
+
+当try 块和 finally 块都有return语句时，try块的return语句会被忽略
+
+#### 4.4.2 finally 的代码一定会被执行吗？
+
+不一定，如果在finally之前虚拟机被终止运行 / 程序所在线程死亡 / 关闭CPU，finally的代码不会被执行
+
+## 五、泛型
+
+### 5.1 泛型类
+
+```java
+@Data
+public class Generic<T>{
+    private T key ;
+}
+
+//实例化
+Generic<Integer> genericInteger = new Generic<Integer>(123456);
+```
+
+### 5.2 泛型接口
+
+```java
+public interface Generator<T>{
+	public T method();
+}
+//实现泛型接口，不指定类型
+class GeneratorImpl<T> implements Generator<T>{
+    @Override
+    public T method() {
+        return null;
+    }
+}
+//实现泛型接口，指定类型
+class GeneratorImpl implements Generator<String> {
+    @Override
+    public String method() {
+        return "hello";
+    }
+}
+```
+
+### 5.3 泛型方法
+
+```java
+public static <E> void printArray(E[] inputArray){
+    for(E element : inputArray){
+        System.out.printf("%s",element);
+    }
+    System.out.println();
+}
+
+//创建不同类型的数组去调用方法
+Integer[] intArray = {1,2,3};
+String[] strArray = {"hello","world"};
+printArray(intArray);
+printArray(strArray);
+```
+
+## 六、反射
+
+### 6.1 反射的概念
+
+反射就是在程序运行时动态地获取类的信息并操作类或对象的能力
+
+### 6.2 反射的特点
+
+#### 6.2.1 反射的优点
+
+1. **灵活性和动态性**：反射允许程序在运行时动态地加载类、创建对象、调用方法和访问字段，根据实际需求（如配置文件、用户输入、注解等）动态地适应和扩展程序的行为。许多现代 Java 框架（如 Spring、Hibernate、MyBatis）正是基于这一特性来实现依赖注入（DI）、面向切面编程（AOP）、对象关系映射（ORM）、注解处理等核心功能，可以说反射是框架开发不可或缺的基础。
+2. **解耦合和通用性**：通过反射，可以编写更通用、可重用和高度解耦的代码，降低模块之间的依赖。例如，可以通过反射实现通用的对象拷贝、序列化、Bean 工具等。
+
+#### 6.2.2 反射的缺点
+
+1. **性能开销**：反射操作通常比直接代码调用要慢。因为涉及到动态类型解析、方法查找以及 JIT 编译器的优化受限等因素。不过，对于大多数框架场景，这种性能损耗通常是可以接受的，或者框架本身会做一些缓存优化。
+2. **安全性问题**：反射可以绕过 Java 语言的访问控制机制（如访问 `private` 字段和方法），破坏了封装性，可能导致数据泄露或程序被恶意篡改。此外，还可以绕过泛型检查，带来类型安全隐患。
+3. **代码可读性和维护性**：过度使用反射会使代码变得复杂、难以理解和调试。错误通常在运行时才会暴露，不像编译期错误那样容易发现。
+
+### 6.3 获取Class对象的四种方式
+
+如果我们需要动态的获取到信息，我们需要使用Class对象。Class对象将一个类的方法，变量等信息告诉运行的程序
+
+```java
+//1. 已知类
+Class alunbarClass = TargetObject.class;
+//2. 通过Class.forName(类的全路径)
+Class alunbarClass = Class.forName("com.yuan.TargetObject");
+//3. 通过对象实例
+TargetObject o = new TargetObject();
+Class alunbarClass = o.getClass();
+//4. 通过类加载器
+ClassLoader.getSystemClassLoader.loadClass("com.yuan.TargetObject");
+```
+
+### 6.4 反射操作类
+
+```java
+public class TargetObject {
+    private String value;
+
+    public TargetObject() {
+        value = "JavaGuide";
+    }
+
+    public void publicMethod(String s) {
+        System.out.println(s);
+    }
+
+    private void privateMethod() {
+        System.out.println("value is " + value);
+    }
+}
+```
+
+```java
+/**
+* 获取 TargetObject 类的 Class 对象并且创建 TargetObject 类实例
+*/
+Class<?> targetClass = Class.forName("com.yuan.TargetObject");
+TargetObject targetObject = (TargetObject) targetClass.newInstance();
+/**
+* 获取 TargetObject 类中定义的所有方法
+*/
+Method[] methods = targetClass.getDeclaredMethods();
+for(Method method : methods){
+    System.out.println(method.getName());
+}
+/**
+* 获取指定方法并调用
+*/
+Method publicMethod = targetClass.getDeclaredMethod("publicMethod",String.class);
+publicMethod.invoke(targetObject,"Hello world");
+/**
+* 获取指定参数并对参数进行修改
+*/
+Field field = targetClass.getDeclaredField("value");
+//对类中的参数进行修改，取消安全检查
+field.setAccessible(true);
+field.set(targetObject,"yuanbro");
+/**
+* 调用private方法
+*/
+Method privateMethod = targetClass.getDeclaredMethod("privateMethod");
+//调用private方法，取消安全检查
+privateMethod.setAccessible(true);
+privateMethod.invoke(targetObject);
+```
+
+
+
+## 七、代理
+
+在Java中，代理主要分为两类：**静态代理**和**动态代理**。
+
+### 7.1 为什么要多此一举使用代理？
+
+都已经有目标对象了，为什么不直接调它，非要多此一举搞个代理？
+
+场景一（开闭原则）：
+
+```java
+// 假设有一个订单方法
+class OrderService {
+    public void createOrder() {
+        // 核心业务：扣减库存、生成订单、扣钱...
+        System.out.println("成功创建订单！");
+    }
+}
+//现在如果要监控订单花了多久的时间，如果没有代理类，就需要修改createOrder()源码
+//所以需要代理类，不动原来的代码，对外增强，只需要在代理类中调用目标方法前后进行扩展
+```
+
+场景二（权限控制）
+
+调用前进行权限的校验等等
+
+### 7.2 静态代理
+
+静态代理需要手动为每个业务类编写一个对应的代理类，通常实现同一个接口
+
+```java
+// 1. 定义一个接口（比如：买房）
+interface BuyHouse {
+    void findHouse();
+}
+
+// 2. 真正的业务类（房东）
+class RealBuyer implements BuyHouse {
+    public void findHouse() {
+        System.out.println("签合同，付钱买房！");
+    }
+}
+
+// 3. 静态代理类（中介）
+class HouseProxy implements BuyHouse {
+    private BuyHouse target; // 持有真正业务对象的引用
+    
+    public HouseProxy(BuyHouse target) {
+        this.target = target;
+    }
+	
+    public void findHouse() {
+        System.out.println("前置工作：中介带客户看房、筛选房源。"); // 增强的功能
+        target.findHouse(); // 调用真正的业务
+        System.out.println("后置工作：中介帮忙过户、交房。"); // 增强的功能
+    }
+}
+```
+
+### 7.3 动态代理
+
+#### 7.3.1 JDK动态代理
+
+JDK 动态代理是 Java 自带的功能，限制是：目标类必须实现至少一个接口，它利用 `java.lang.reflect.Proxy` 类和 `InvocationHandler` 接口来实现。
+
+在动态代理中，我们不写具体的中介类，而是写一个通用的管家，只做一件事，不管谁找我，我都在他前后加上自己的逻辑，比如写日志，打广告
+
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+
+// 这个叫 LogHandler 的类，就是我们的“通用管家”
+class LogHandler implements InvocationHandler {
+    private Object target; // 1. 管家心里装着那个“真正的业务员”（房东）
+
+    public LogHandler(Object target) {
+        this.target = target;
+    }
+
+    // 2. 核心：所有被代理的方法，最终都会走到这个 invoke 方法里来执行！
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        // 这里就是你加的“中介特权”
+        System.out.println("【动态代理】前置工作：中介带客户看房、筛选房源。"); 
+        
+        // 这行代码是用“反射”去执行真正的业务（房东的 findHouse）
+        Object result = method.invoke(target, args); 
+        
+        System.out.println("【动态代理】后置工作：中介帮忙过户、交房。");
+        return result;
+    }
+}
+```
+
+通过管家类动态代理
+
+```java
+public static void main (String[] args){
+    //1. 要代理的对象,该对象必须实现至少一个接口
+    BuyHouse realBuyer = new RealBuyer();
+    //2. 交给管家代理
+    LogHandler handler = new LogHandler(realBuyer);
+    //3. 让 JVM 在内存中动态生成一个代理对象
+    BuyHouse proxyInstance = (BuyHouse) Proxy.newProxyInstance(
+                realBuyer.getClass().getClassLoader(),    // 目标类的类加载器
+                realBuyer.getClass().getInterfaces(),   // 目标类实现的接口（告诉JVM代理类要实现什么接口）
+                handler                                 // 把管家绑定上去
+    );
+    //4. 调用方法，底层是管家的invoke方法
+    proxyInstance.findHouse();
+}
+```
+
+#### 7.3.2 CGLIB 动态代理（第三方库）
+
+如果类没用实现任何接口呢？就可以选择使用CGLIB了
+
+原理是通过修改字节码，动态生成一个子类来继承目标类，所以不需要目标类去实现接口
+
+**1.目标业务类**
+
+```java
+// 完美的独立类，没有任何接口
+class RealBuyer {
+    public void findHouse() {
+        System.out.println("签合同，付钱买房！");
+    }
+}
+```
+
+**2.通用管家**
+
+在CGLIB中管家 MethodInterceptor（方法拦截器）
+
+```java
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
+import java.lang.reflect.Method;
+
+// CGLIB 的管家
+class CglibProxyInterceptor implements MethodInterceptor {
+
+    /**
+     * 所有被代理对象的方法执行时，都会经过这个 intercept 方法
+     * @param obj         CGLIB 动态生成的代理对象（子类）
+     * @param method      当前调用的父类方法
+     * @param args        方法的参数
+     * @param methodProxy CGLIB 提供的快速调用父类方法的代理对象
+     */
+    @Override
+    public Object intercept(Object obj, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
+        System.out.println("【CGLIB 代理】前置工作：中介带客户看房、筛选房源。");
+        
+        // 核心：注意这里！调用的是 invokeSuper（调用父类的方法）
+        // 因为 CGLIB 生成的代理类是 RealBuyer 的子类
+        Object result = methodProxy.invokeSuper(obj, args);
+        
+        System.out.println("【CGLIB 代理】后置工作：中介帮忙过户、交房。");
+        return result;
+    }
+}
+```
+
+**3.调用**
+
+需要利用CGLIB的Enhancer（增强器）动态创建子类
+
+```java
+import org.springframework.cglib.proxy.Enhancer;
+
+public class Main {
+    public static void main(String[] args) {
+        // 1. 创建 CGLIB 的增强器
+        Enhancer enhancer = new Enhancer();
+        
+        // 2. 告诉 CGLIB，你要为哪个类创建子类（把房东设为父类）
+        enhancer.setSuperclass(RealBuyer.class);
+        
+        // 3. 设置你的管家（回调函数）
+        enhancer.setCallback(new CglibProxyInterceptor());
+        
+        // 4. 见证奇迹：动态生成代理对象（它在内存中是 RealBuyer 的一个子类）
+        RealBuyer proxyInstance = (RealBuyer) enhancer.create();
+        
+        // 5. 调用方法
+        proxyInstance.findHouse();
+    }
+}
+```
+
+#### 7.3.3 JDK动态代理和CGLIB动态代理的区别
+
+| **特性**     | **JDK 动态代理**                                          | **CGLIB 动态代理**                                          |
+| ------------ | --------------------------------------------------------- | ----------------------------------------------------------- |
+| **实现原理** | 基于 **接口**（通过实现相同接口生成代理）                 | 基于 **继承**（通过生成子类来覆盖方法）                     |
+| **要求**     | 目标类必须**实现接口**                                    | 目标类和方法**不能是 `final`**                              |
+| **依赖**     | JDK 原生自带，无需引入外包                                | 需要引入 CGLIB 依赖（Spring已内置）                         |
+| **性能演变** | 早期性能稍弱，但 JDK 8 之后经过深度优化，性能已经非常优秀 | 以前在生成复杂对象时比 JDK 快，但现在两者的差距基本可以忽略 |
+
+#### 7.3.4 为什么要动态代理
+
+以上面静态代理买房子为例子，如果过几天，老板提出了不仅要买房，还要买车
+
+如果用静态代理，必须手动去写Class CarProxy implements BuyCar ，如果有多个业务，就需要手写多个代理类，非常冗余
+
+如果使用动态代理，什么都不需要改，只需要把汽车对象传递给管家，就会自动生成代理对象
+
+## 八、序列化与反序列化
+
+### 8.1 概念
+
+- **序列化**：将数据结构或对象转换成可以存储或传输的形式，通常是二进制字节流，也可以是 JSON, XML 等文本格式
+- **反序列化**：将在序列化过程中所生成的数据转换为原始数据结构或者对象的过程
+
+### 8.2 常见场景
+
+- 对象在进行**网络传输**（比如远程方法调用 RPC 的时候）之前需要先被序列化，接收到序列化的对象之后需要再进行反序列化；
+- 将对象**存储到文件**之前需要进行序列化，将对象从文件中读取出来需要进行反序列化；
+- 将对象**存储到数据库**（如 Redis）之前需要用到序列化，将对象从缓存数据库中读取出来需要反序列化；
+- 将对象**存储到内存**之前需要进行序列化，从内存中读取出来之后需要进行反序列化。
+
+![image-20260521120705513](images/image-20260521120705513.png)
+
+### 8.3 transient 关键字
+
+对于不想进行序列化的字段，使用transient关键字进行修饰
+
+阻止实例中那些用此关键字修饰的变量序列化；当对象被反序列化时，被 `transient` 修饰的变量值不会被持久化和恢复。
+
+注意：
+
+- transient只能修饰变量，不能修饰类和方法
+- transient修饰的变量，在被反序列化之后变量值回置为默认值，比如说修饰了int类型，那么反序列化后结构就是0
+- static变量不属于任何对象，所以不管有没有被transient 关键字修饰，均不会被序列化
+
+### 8.4 JDK自带的序列化
+
+为什么不推荐使用JDK自带的序列化？
+
+- **不支持跨语言调用** : 如果调用的是其他语言开发的服务的时候就不支持了。
+- **性能差**：相比于其他序列化框架性能更低，主要原因是序列化之后的字节数组体积较大，导致传输成本加大。
+- **存在安全问题**：序列化和反序列化本身并不存在问题。但当输入的反序列化的数据可被用户控制，那么攻击者即可通过构造恶意输入，让反序列化产生非预期的对象，在此过程中执行构造的任意代码。相关阅读：[应用安全：JAVA 反序列化漏洞之殇](https://cryin.github.io/blog/secure-development-java-deserialization-vulnerability/) 。
+- 常见的序列化工具，比如FastJson，Kryo等等
+
+### 8.5 代码示例
+
+```java
+// 1. 必须实现 Serializable 接口
+class User implements Serializable {
+	// 2. 序列化版本号，必须写死。如果你不手动写死，JVM会根据类的结构自动计算一个哈希值作为版本号
+    private static final long serialVersionUID = 1L;
+
+    private String name;
+    private int age;
+    
+    // 3. transient 关键字：有些秘密不想被打包（比如密码）
+    private transient String password; 
+
+    public User(String name, int age, String password) {
+        this.name = name;
+        this.age = age;
+        this.password = password;
+    }
+
+    @Override
+    public String toString() {
+        return "User{name='" + name + "', age=" + age + ", password='" + password + "'}";
+    }
+}
+```
+
+```java
+public class SerializeDemo {
+    public static void main(String[] args) {
+        User user = new User("张三", 25, "secret123");
+        String filePath = "user.ser";
+
+        // ====== 序列化：把对象变成文件 ======
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(user); // 核心：一句话打包
+            System.out.println("序列化成功！对象已保存到 " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // ====== 反序列化：从文件恢复对象 ======
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            User deserializedUser = (User) ois.readObject(); // 核心：一句话还原
+            System.out.println("反序列化成功！恢复的对象为：");
+            System.out.println(deserializedUser); // User{name='张三', age=25, password='null'}
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+## 九、注解
+
+### 9.1 注解原理
+
+注解本质上，是一个继承了Annotation的特殊接口，其具体的实现类是Java运行时生成的动态代理类。
+
+通过反射获取到注解，返回的是Java运行时生成的动态代理对象。通过代理对象去调用自定义注解的方法。
+
+```java
+public @interface MyAnnotation{
+	Striing Value();
+}
+```
+
+### 9.2 注解的分类
+
+Java中的注解可以根据用途分为四类
+
+1. **JDK内置核心注解：**常见有@Override，@Deprecated等，用于编译器
+2. **元注解：**常见有@Rentention，@Target，@Decumented等，专门用于修饰“其他注解”的注解，决定了自定义注解的使用
+3. **框架注解：**常见@Autowired，@Parm等，Spring、Mybatis等框架提供的注解
+4. **自定义注解**
+
+### 9.3 元注解：定义标签的规则
+
+#### 9.3.1 @Target
+
+决定了自定义注解可以用在类、方法、属性还是参数上
+
+- `ElementType.TYPE`：能贴在类、接口、枚举上。
+- `ElementType.METHOD`：能贴在方法上。
+- `ElementType.FIELD`：能贴在成员变量（属性）上。
+- `ElementType.PARAMETER`：能贴在方法参数上。
+
+#### 9.3.2 @Rentention
+
+决定了注解的信息保留到哪个阶段
+
+- `RetentionPolicy.SOURCE`：**只留在源码里**。编译成 `.class` 文件时，这张标签就被丢弃了（例如 `@Override`）。
+- `RetentionPolicy.CLASS`：**保留到字节码阶段**。会被编译进 `.class` 文件，但 JVM 加载类时会忽略它（这是默认行为）。
+- `RetentionPolicy.RUNTIME`：**一直活到运行期**。JVM 在运行程序时也能读到它。**绝大多数第三方框架和自定义注解，都必须设置成这个！** 因为只有活到运行期，我们才能通过“反射”去读取它。
+
+### 9.4 实现一个自定义注解
+
+```java
+@Target(ElementType.METHOD)          // 只能贴在方法上
+@Retention(RetentionPolicy.RUNTIME)  // 必须活到运行期，否则反射读不到
+public @interface RequiresRole {
+    // 注解的属性，看起来像方法，其实是配置项
+    // 可以设置默认值，如果不设置，使用时就必须手动赋值
+    String value() default "USER"; 
+}
+```
+
+
+
