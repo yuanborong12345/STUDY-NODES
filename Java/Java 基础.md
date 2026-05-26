@@ -418,7 +418,7 @@ public class Student {
           System.out.println("This is a private method used internally.");
       }
   
-        // 实例私有方法，只能被 default 方法调用。
+      // 实例私有方法，只能被 default 方法调用。
       private void instanceCommonMethod() {
           System.out.println("This is a private instance method used internally.");
       }
