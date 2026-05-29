@@ -101,6 +101,43 @@ int d = c--;	// d = 11 , c = 10
 int e = --d;	// e = 10 , d = 10
 ```
 
+### 1.9 数组
+
+内存中连续的空间，类型确定和长度固定
+
+#### 1.9.1 数组的初始化
+
+```java
+//1. 动态初始化（只指定长度，由系统赋予默认值）
+int[] arr = new int[5];
+//2. 静态初始化
+int[] arr = new int[]{1, 2, 3, 4, 5};
+// 或者是更常用的语法糖简写：
+int[] arr2 = {1, 2, 3, 4, 5}; 
+```
+
+#### 1.9.2 常见数组方法
+
+核心工具类Arrays
+
+```java
+//数组转列表
+Arrays.asList(arr);
+
+//高效排序
+底层硬核：它并不是简单的冒泡或快排。对于基本类型，它使用的是改良版的双枢轴快速排序（Dual-Pivot QuickSort）；对于引用类型，它使用的是TimSort（一种结合了合并排序和插入排序的稳定排序算法）。
+Arrays.sort(arr);
+
+//二分查找（注意：必须先用 sort 排序后才能用二分查找）。
+Arrays.binarySearch(arr, target);
+
+//数组复制
+Arrays.copyOf(arr, newLength);
+
+//打印数组,直接 System.out.println(arr) 只会打印出无意义的内存哈希码（如 [I@5f150435）。正确姿势是使用 
+Arrays.toString(arr);
+```
+
 ## 二、数据类型
 
 ### 2.1 基础数据类型
