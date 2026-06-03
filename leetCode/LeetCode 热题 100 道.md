@@ -140,3 +140,45 @@ class Solution {
 2. set.contains(value):查找set中是否存在该值
 3. Math.max(v1,v2):常见的取最大值方式。同样的有Math.min(v1,v2)
 
+### 1.4 [移动零](https://leetcode.cn/problems/move-zeroes/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定一个数组 `nums`，编写一个函数将所有 `0` 移动到数组的末尾，同时保持非零元素的相对顺序。
+
+**请注意** ，必须在不复制数组的情况下原地对数组进行操作。
+
+**示例 1:**
+
+```
+输入: nums = [0,1,0,3,12]
+输出: [1,3,12,0,0]
+```
+
+**答案：**
+
+```java
+class Solution {
+    public void moveZeroes(int[] nums) {
+        int left = 0, right = 0;
+        int len = nums.length;
+        while(right < len){
+            if(nums[right] != 0){
+                swap(nums,left,right);
+                left ++ ;
+            }
+            right++;
+        }
+    }
+
+    //交换函数
+    private void swap(int[] nums ,int i, int j){
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+}
+```
+
+**收获：**
+
+1. 右指针找非 0，找到就和左指针交换，左指针跟着走，最后 0 全在右边
+2. 快慢指针的思路
