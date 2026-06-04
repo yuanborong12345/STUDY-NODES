@@ -140,7 +140,9 @@ class Solution {
 2. set.contains(value):查找set中是否存在该值
 3. Math.max(v1,v2):常见的取最大值方式。同样的有Math.min(v1,v2)
 
-### 1.4 [移动零](https://leetcode.cn/problems/move-zeroes/description/?envType=study-plan-v2&envId=top-100-liked)
+## 二、双指针
+
+### 2.1 [移动零](https://leetcode.cn/problems/move-zeroes/description/?envType=study-plan-v2&envId=top-100-liked)
 
 给定一个数组 `nums`，编写一个函数将所有 `0` 移动到数组的末尾，同时保持非零元素的相对顺序。
 
@@ -182,3 +184,36 @@ class Solution {
 
 1. 右指针找非 0，找到就和左指针交换，左指针跟着走，最后 0 全在右边
 2. 快慢指针的思路
+
+### 2.2 [盛水最多的容器](https://leetcode.cn/problems/container-with-most-water/description/?envType=study-plan-v2&envId=top-100-liked)
+
+给定一个长度为 `n` 的整数数组 `height` 。有 `n` 条垂线，第 `i` 条线的两个端点是 `(i, 0)` 和 `(i, height[i])` 
+
+找出其中的两条线，使得它们与 `x` 轴共同构成的容器可以容纳最多的水。
+
+返回容器可以储存的最大水量。
+
+**说明：**你不能倾斜容器。
+
+![image-20260604102628365](images/image-20260604102628365.png)
+
+**答案：**
+
+```java
+class Solution {
+    public int maxArea(int[] height) {
+        int max  = 0;
+        int L = 0,R = height.length - 1;
+        while(L < R){
+            max = Math.max(Math.min(height[L],height[R]) * (R - L),max);
+            if(height[L] <= height[R]){
+                L++;
+            }else{
+                R--;
+            }
+        }
+        return max;
+    }
+}
+```
+
