@@ -127,6 +127,15 @@ List<String> list = new ArrayList<>(Arrays.asList("A", "B", "C"));
 list.removeIf(s -> "B".equals(s));
 ```
 
+### 1.5 List 和 Set 的区别
+
+| **特性**         | **List (列表)**                                        | **Set (集)**                                                 |
+| ---------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| **重复性**       | **允许重复**。可以放入多个完全相同的对象。             | **不允许重复**。新加入的重复元素会被直接过滤掉。             |
+| **是否有序**     | **保证插入顺序**。先放进去的在前面，后放进去的在后面。 | **通常无序**（例外：`LinkedHashSet` 保持插入顺序，`TreeSet` 保持大小排序）。 |
+| **通过索引访问** | **支持**。有下标概念，可以通过 `get(index)` 任意访问。 | **不支持**。没有下标，不能通过索引获取元素。                 |
+| **Null 值**      | **允许放入多个 `null`**。                              | **最多只允许放入一个 `null`**（某些实现如 `TreeSet` 甚至不允许放 `null`）。 |
+
 ## 二、List
 
 ### 2.1 ArrayList
@@ -425,3 +434,219 @@ Java8之后，改为尾插法插入元素，扩容时会保证原链表元素的
 
 多线程同时put操作，有可能会造成前一个key被后一个key覆盖，导致元素的丢失
 
+### 3.3 HashTable
+
+#### 3.3.1 底层数据结构
+
+从底层结构来看，`Hashtable` 的基础非常传统，在 Java 8 中它依然长这样：**数组 + 链表**。
+
+- 它内部同样维护了一个 `Entry<?,?>[] table` 数组。
+- 当发生哈希冲突时，它会采用**头插法**在桶上拉出一条单向链表。
+- **注意**：它并没有像 `HashMap` 那样在 Java 8 里引入红黑树优化。如果同一个桶里冲突严重，它的查找性能会死死卡在 $O(n)$。
+
+#### 3.3.2. 全方法加锁synchornized 
+
+ **几乎所有公开的方法上，都挂着 `synchronized` 关键字！**
+
+```java
+public synchronized V put(K key, V value) { ... }
+public synchronized V get(Object key) { ... }
+public synchronized V remove(Object key) { ... }
+public synchronized int size() { ... }
+```
+
+这种设计在 Java 1.0 年代（1996年）并发流量极低的背景下，确实保证了线程安全。但在现代高并发、多核心的 CPU 架构下，这是极其致命的：
+
+- **一刀切的独占锁**：只要有一个线程在调用 `get` 读数据，其他所有想要 `put` 或者是想读其他桶数据的线程，统统必须在外面**死等排队**。
+- **高并发克星**：它锁的是**整个大数组对象本身**（锁粒度太粗了）。只要并发一上来，吞吐量会发生断崖式下跌。
+
+#### 3.3.3. Hashtable vs HashMap 核心区别
+
+| **维度**           | **Hashtable **                                               | **HashMap **                                                 |
+| ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| **诞生时代**       | Java 1.0 (属于历史遗留的旧集合)                              | Java 1.2 (随着全新集合框架诞生)                              |
+| **线程安全性**     | **线程安全**。方法全加 `synchronized` 锁。                   | **线程不安全**。需要外部同步或使用 `ConcurrentHashMap`。     |
+| **Null 值支持**    | **绝对不允许** Key 或 Value 为 `null`（放 `null` 直接抛空指针异常）。 | **允许** 一个 Key 为 `null`，多个 Value 为 `null`。          |
+| **初始容量与扩容** | 默认初始容量为 **11**，扩容时翻倍加一： **$new = old \times 2 + 1$**。 | 默认初始容量为 **16**，扩容时**严格翻倍**： **$new = old \times 2$**。 |
+| **底层寻址算法**   | 采用传统的**取模法**： `index = (hash & 0x7FFFFFFF) % length;` | 采用极速的**位运算**： `index = (n - 1) & hash;` (长度必为2的幂) |
+
+#### 3.3.4 为什么 Hashtable 的 Key/Value 不能是 null？
+
+看 `Hashtable.put` 的源码：
+
+```java
+public synchronized V put(K key, V value) {
+    // 1. 如果 value 是 null，直接抛空指针
+    if (value == null) {
+        throw new NullPointerException();
+    }
+    // 2. 如果 key 是 null，下面这句 key.hashCode() 会直接引发空指针！
+    int hash = key.hashCode(); 
+    ...
+}
+```
+
+而 `HashMap` 在实现时，特意在计算 Hash 码的地方做了一层兼容包容处理：`(key == null) ? 0 : ...`，它把 `null` 键的哈希值硬编码为了 `0`，强制放在 0 号桶位置。这就是设计理念上的进步。
+
+### 3.4 ConcurrentHashMap ，简称CHM
+
+#### 3.4.1 Jdk 7 到 Jdk 8 的变化
+
+**Java 8 以前：**
+
+![image-20260604120712984](images/image-20260604120712984.png)
+
+- 数组Segment + 数组 HashEntry + 链表
+
+  **Segment（段）**：每个 `Segment` 内部其实就是一个小型、独立的 `HashMap`（包含一个 `HashEntry` 数组）。
+
+  **核心原理**：最硬核的是，`Segment` 本身继承自 **`ReentrantLock`（可重入锁）**，**每一段都是一把独立的锁**。
+
+- 并发度：
+
+  默认情况下，内部包含 **16 个 Segment**，也就是说并发度默认是 16。
+
+  **效果**：当线程 A 往 1 号 Segment 插入数据时，它只会锁住 1 号 Segment。线程 B 如果同时往 2 号 Segment 插入数据，两个线程互不干扰，完美并行！
+
+  **致命缺点**：虽然并发度提升了 16 倍，但只要数组初始化了，Segment 的数量就**再也无法改变**。如果并发流量极其恐怖，16 个锁依然不够分，桶内部的单向链表过长时，查询依然会退化成 O(n)。
+
+**Java 8 以后：**
+
+- 彻底抛弃 Segment，回归大数组结构，把锁的粒度细化到每一个桶（Bucket），底层回归 `Node<K,V>[] table` 数组，结合了 **数组 + 链表 + 红黑树** 的物理形态（与 Java 8 HashMap 一致）
+
+- 无锁的CAS头节点的插入（乐观锁）
+
+  当你准备往一个原本是**空**的哈希桶里放入第一个节点时，CHM 不加锁，它采用了 **CAS（Compare And Swap，比较并交换）** 这一原子性的硬件级别指令。
+
+  ```java
+  // 源码级逻辑伪代码
+  if (casTabAt(tab, i, null, new Node<K,V>(hash, key, value))) {
+      // 如果这个位置是 null，就用 CAS 原子性地把它“偷渡”进去
+      // 整个过程不加锁，性能堪比单线程！
+  }
+  ```
+
+- 只锁桶的头结点（悲观锁)
+
+  如果这个桶里已经有数据了（发生哈希冲突），需要往链表或者红黑树里追加节点，此时才需要加锁。
+
+  使用Synchronized锁住当前桶的第一个节点
+
+  并发度：如果数组长度是 16，就有 16 把锁；如果扩容到 4096，就有 **4096 把锁**！并发度随着数组的扩容而指数级飙升
+
+#### 3.4.2 为什么 Java 8 要用 `synchronized` 代替 `ReentrantLock`？
+
+如果是 `ReentrantLock`，每个节点或段都要继承或持有一个复杂的锁对象，开销极大。而 `synchronized` 是内置锁，只需要在 Node 对象的头顶（Mark Word）打个标记，不占用额外内存。
+
+#### 3.4.3 读操作不加锁的原理
+
+无论是在 Java 7 还是 Java 8，`ConcurrentHashMap` 的 `get` 方法都是**完全不需要加锁**的。原理是依靠 **`volatile`** 关键字。
+
+```java
+// Node 节点源码
+static class Node<K,V> implements Map.Entry<K,V> {
+    final int hash;
+    final K key;
+    // 核心：value 和 next 指针全部用 volatile 修饰！
+    volatile V val;
+    volatile Node<K,V> next;
+}
+```
+
+因为 `val` 和 `next` 指针是 `volatile` 的，一旦写线程在长链表或红黑树里改了值、或者添加了新节点，CPU 的**缓存一致性协议**会强制让读线程的缓存行失效，从而去主内存拿到最新修改的值。这就实现了高并发下极其恐怖的读性能
+
+#### 3.4.4 协助扩容
+
+当一个线程在执行 `put` 操作时，如果发现当前桶的头节点类型是一个特殊的 `ForwardingNode`（它的 hash 值被硬编码为 `-1`），这意味着：**整个大数组目前正在进行扩容**
+
+此时，这个写线程会**协助主线程一起把老数组里的数据搬移到新数组中**。多个线程同时分段搬移数据，扩容速度极快，搬完之后，写线程再回过头来把自己的数据写入新数组。
+
+#### 3.4.5 为什么 ConcurrentHashMap 不允许 Null 键和 Null 值
+
+**是为了消除并发环境下的歧义**
+
+假设我们调用 `map.get("key")` 返回了 `null`，在单线程的 `HashMap` 下，我们可以通过 `map.contains("key")` 来进一步确认：
+
+- 究竟是“图里根本没有这个键”（返回 `false`）？
+- 还是“图里有这个键，只是值正好就是 `null`”（返回 `true`）？
+
+但在多线程环境下，因为没有大锁，在两步操作之间（执行完 `get` 准备执行 `contains` 的那一微秒），**别的线程可能悄悄把这个键给删除了！**
+
+这就导致：
+
+1. 线程 1 调 `get("key")` 返回 `null`。
+2. 线程 2 瞬间把 `"key"` 删了。
+3. 线程 1 调 `contains("key")`，结果返回 `false`。 此时线程 1 彻底懵了：它根本无法判断当初返回的 `null` 到底是值本身是 `null`，还是当时没有。这种由于时序引发的并发致命二义性，是金融、分布式业务无法接受的。因此，CHM 在根源上禁止了 `null` 的存在。
+
+## 四、Set
+
+### 4.1 HashSet
+
+底层复用了HashMap，数组 + 链表 + 红黑树，存入元素的顺序和取出的顺序完全没有关系，因为它是根据哈希值随机散列到数组中的。由于直接享受了 `HashMap` 的红黑树和寻址优化，它的增删改查平均时间复杂度达到了**O(1)**
+
+```java
+public class HashSet<E> extends AbstractSet<E> implements Set<E> ... {
+    // 秘密武器：内部其实藏着一个 HashMap
+    private transient HashMap<E,Object> map;
+
+    // 每一个放进 HashSet 的元素，在底层其实都成了 HashMap 的 Key
+    // 而 HashMap 的 Value 则是统一使用一个没有意义的虚假对象 PRESENT
+    private static final Object PRESENT = new Object();
+
+    public HashSet() {
+        map = new HashMap<>(); // 构造函数里直接 new 了一个 HashMap
+    }
+
+    public boolean add(E e) {
+        // 往 Set 里加元素，底层实际上是调用的 map.put(e, PRESENT)
+        return map.put(e, PRESENT) == null; 
+    }
+}
+```
+
+### 4.2 TreeSet
+
+内部包含了TreeMap，底层是红黑树
+
+**大小排序**：根据元素本身的**大小关系**，自动排列成一个**升序序列**
+
+**查找性能**：由于要遵循二叉树的左右查找逻辑，每次增删查都需要在树上做平衡旋转，所以它的时间复杂度是稳定的 **O(\log n)**，略逊于 `HashSet`。
+
+**规则依赖**：放入 `TreeSet` 的元素**必须具备比较规则**，即元素类必须实现 `Comparable` 接口（重写 `compareTo` 方法），或者在初始化 `TreeSet` 时传给它一个自定义的 `Comparator`。
+
+### 4.3 LinkedHashSet
+
+需要去重，但又希望**保持元素放进去时的先后顺序**
+
+`LinkedHashSet` 继承自 `HashSet`。它的底层包的是一个 **`LinkedHashMap`**。
+
+- 它在 `HashSet` 的哈希表基础之上，给每个节点额外增加了 `before` 和 `after` 的指针。
+
+- 这些指针在所有独立的元素之间拉出了一条**贯穿全场的双向链表**。
+
+- 遍历 `LinkedHashSet` 时，输出的顺序**严格等同于你的插入顺序**。
+
+  **性能代价**：由于每次增删不仅要在哈希表里操作，还要顺便维护双向链表的指针关系，所以它的性能比 `HashSet` 略微慢一点点，但依然保持在稳定的 **$O(1)$** 级别
+
+### 4.4 Set如何保证不重复？
+
+#### 4.4.1 `HashSet` & `LinkedHashSet` 的去重：HashCode + Equals
+
+因为它们底层是 `HashMap`，而 `HashMap` 的 Key 是不允许重复的。当它们在调用 `add(e)` 时
+
+- **比较 HashCode** 当新来一个元素时，系统先计算它的 `hashCode()` 值，通过位运算定位到具体的哈希槽位。
+  - 如果这个槽位是空的，说明之前没有类似的元素，直接判定不重复，放进去！
+  - 如果这个槽位上已经有别的元素了（发生了**哈希冲突**），它才会开启第二关。
+- **肉搏对比 `equals()`** 系统会顺着该槽位的链表（或红黑树），拿着新元素和老元素一个一个调用 `equals()` 方法进行逐字逐句的对比：
+  - 如果 `equals()` 返回 `true`：判定为重复元素，新来的元素直接被**无情丢弃**，返回 `false`。
+  - 如果 `equals()` 返回 `false`：说明只是哈希冲突，内容并不一样。判定不重复，以链表或红黑树的形式挂在下面。
+
+> **⚠️ 正因如此，存入 `HashSet` 的自定义对象，**必须强制同时重写 `hashCode()` 和 `equals()`！否则，两个属性完全一样的对象，会因为内存地址不同算出不同的 `hashCode`，直接绕过防线，导致 `Set` 俱乐部里混入重复数据。
+
+#### 4.4.2 TreeSet ：CompareTo() 和 Compare()
+
+红黑树，在插入元素时，它会拿着新元素顺着根节点往下比大小：
+
+- 如果新元素比当前节点小，走左边。
+- 如果新元素比当前节点大，走右边。
+- 如果比较方法的返回值是 **`0`**： 判定重复，拒绝该元素入树

@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0819973f-f973-4fbc-8bd1-4b381453110c" name="Changes" comment="Java 集合学习笔记" />
+    <list default="true" id="0819973f-f973-4fbc-8bd1-4b381453110c" name="Changes" comment="2026年6月4号" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -57,6 +57,7 @@
       <workItem from="1779776029871" duration="578000" />
       <workItem from="1780042474506" duration="324000" />
       <workItem from="1780043987090" duration="642000" />
+      <workItem from="1780540054068" duration="43000" />
     </task>
     <task id="LOCAL-00001" summary="Java 基础学习笔记">
       <option name="closed" value="true" />
@@ -90,7 +91,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780049482800</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="2026年6月4号">
+      <option name="closed" value="true" />
+      <created>1780540082274</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1780540082274</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -101,6 +110,7 @@
     <MESSAGE value="Java IO 学习笔记" />
     <MESSAGE value="微信小程序学习笔记" />
     <MESSAGE value="Java 集合学习笔记" />
-    <option name="LAST_COMMIT_MESSAGE" value="Java 集合学习笔记" />
+    <MESSAGE value="2026年6月4号" />
+    <option name="LAST_COMMIT_MESSAGE" value="2026年6月4号" />
   </component>
 </project>
