@@ -217,3 +217,65 @@ class Solution {
 }
 ```
 
+### 2.3 [三数之和](https://leetcode.cn/problems/3sum/?envType=study-plan-v2&envId=top-100-liked)
+
+给你一个整数数组 `nums` ，判断是否存在三元组 `[nums[i], nums[j], nums[k]]` 满足 `i != j`、`i != k` 且 `j != k` ，同时还满足 `nums[i] + nums[j] + nums[k] == 0` 。请你返回所有和为 `0` 且不重复的三元组。
+
+**注意：**答案中不可以包含重复的三元组。
+
+**示例 1：**
+
+```
+输入：nums = [-1,0,1,2,-1,-4]
+输出：[[-1,-1,2],[-1,0,1]]
+解释：
+nums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0 。
+nums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0 。
+nums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0 。
+不同的三元组是 [-1,0,1] 和 [-1,-1,2] 。
+注意，输出的顺序和三元组的顺序并不重要。
+```
+
+**答案：**
+
+```java
+class Solution {
+    public List<List<Integer>> threeSum(int[] nums) {
+        int len = nums.length;
+        Arrays.sort(nums);//从小到大排序，方便双指针从两头往中间找数，方便跳过重复数字，避免重复答案
+        List<List<Integer>> ans = new ArrayList<List<Integer>>();
+        //枚举第一个数
+        for(int first = 0 ; first < len ; first ++){
+            //如果与上一个数相同，跳过，避免相同的第一个数
+            if(first > 0 && nums[first] == nums[first - 1]){
+                continue;
+            }
+            //固定第一个数， 确定second + third = - first
+            int target = -nums[first];
+            //枚举第二个数
+            for(int second = first + 1 ; second < len ; second ++){
+                //如果与上一个数相同，跳过，避免相同的第二个数
+                if(second > first + 1 && nums[second] == nums[second - 1]){
+                    continue;
+                }
+                //第一个数和第二个数确定了，枚举第三个数,且保证第三个数在第二个数的右侧区域
+                int third = len -1;
+                while(second < third && nums[third] + nums[second] > target){
+                    third--;
+                }
+                //second 和 third 重合，说明没找到对应的target
+                if(second == third){
+                    break;
+                }
+                //找到，添加到答案中
+                if(nums[third] + nums[second] == target){
+                    ans.add(Arrays.asList(nums[first],nums[second],nums[third]));
+                }
+            }
+        }
+        return ans;
+    }
+}
+
+```
+
