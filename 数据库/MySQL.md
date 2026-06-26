@@ -1,6 +1,8 @@
-# SQL基础
+# MySQL基础
 
-## 连接
+## 一、基础
+
+### 1.1 连接
 
 ```mysql
 # 启动和关闭mysql服务
@@ -12,7 +14,7 @@ mysql -h -127.0.01 -P 3306 -u root -p
 mysql -u root -p
 ```
 
-## 数据库
+### 1.2 数据库
 
 ```mysql
 # 创建使用utf8字符集，并带校对规则（utf8_bin 不区分大小写,默认utf8_general_ci不区分大小写）的数据库
@@ -25,9 +27,9 @@ show databases;
 show create database da_name;
 ```
 
-## 表
+### 1.3 表
 
-### 创建表
+#### 1.3.1 创建表
 
 ```mysql
 # 创建表
@@ -83,7 +85,7 @@ auto_increment = 1000  				#自增起始值
 comment = "表注释信息"
 ```
 
-### 修改表
+#### 1.3.2 修改表
 
 ```mysql
 # 查看表结构
@@ -100,7 +102,7 @@ rename table tb_name to tb_name2;
 alter table tb_name character set utf8;
 ```
 
-### CRUD
+### 1.4 CRUD
 
 ```mysql
 # 增
@@ -113,7 +115,7 @@ update tb_name set cloumn_name = ? ;
 select * from tb_name;
 ```
 
-## 运算符
+### 1.5 运算符
 
 ```mysql
 between...and...
@@ -126,7 +128,7 @@ or
 not
 ```
 
-## 关键字
+### 1.6 关键字
 
 ```mysql
 where
@@ -135,7 +137,7 @@ order by
 having
 ```
 
-## 函数
+### 1.7 函数
 
 ```mysql
 # 统计数学
@@ -162,9 +164,9 @@ datediff(date1,date2)			 #时间差
 now()
 ```
 
-## 事务
+## 二、事务
 
-### 隔离级别
+### 2.1 隔离级别
 
 ```mysql
 read uncommitted     脏读、不可重复读、幻读
@@ -183,7 +185,7 @@ serializable
 当有事务在操作某个表时，该表将不再被其他表操作，直到正在操作的事务
 ```
 
-### 基础语法
+### 2.2 基础语法
 
 ```mysql
 # 查询当前事务隔离级别
@@ -211,7 +213,7 @@ ROLLBACK; -- 回退到事务开始的状态
 COMMIT;
 ```
 
-### 四大特性
+### 2.3 四大特性
 
 - A（原子性）：事务中的操作要么全部完成，要么全部失败
 

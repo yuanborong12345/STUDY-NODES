@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0819973f-f973-4fbc-8bd1-4b381453110c" name="Changes" comment="分类以及笔记说明">
+    <list default="true" id="0819973f-f973-4fbc-8bd1-4b381453110c" name="Changes" comment="小程序调试">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/数据库/MySQL.md" beforeDir="false" afterPath="$PROJECT_DIR$/数据库/MySQL.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,6 +62,7 @@
       <workItem from="1780043987090" duration="642000" />
       <workItem from="1780540054068" duration="43000" />
       <workItem from="1780570383558" duration="373000" />
+      <workItem from="1781073702198" duration="1759000" />
     </task>
     <task id="LOCAL-00001" summary="Java 基础学习笔记">
       <option name="closed" value="true" />
@@ -110,7 +112,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780570597107</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="小程序调试">
+      <option name="closed" value="true" />
+      <created>1781073738641</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1781073738641</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -123,6 +133,7 @@
     <MESSAGE value="Java 集合学习笔记" />
     <MESSAGE value="2026年6月4号" />
     <MESSAGE value="分类以及笔记说明" />
-    <option name="LAST_COMMIT_MESSAGE" value="分类以及笔记说明" />
+    <MESSAGE value="小程序调试" />
+    <option name="LAST_COMMIT_MESSAGE" value="小程序调试" />
   </component>
 </project>
